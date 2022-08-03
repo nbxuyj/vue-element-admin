@@ -8,7 +8,7 @@ import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
-
+// 免登录的⽩名单,⽩名单通常装着登录页或扫码下载页
 const whiteList = ['/login', '/auth-redirect'] // no redirect whitelist
 
 router.beforeEach(async(to, from, next) => {
@@ -16,19 +16,26 @@ router.beforeEach(async(to, from, next) => {
   NProgress.start()
 
   // set page title
+  // 设置页⾯标题
   document.title = getPageTitle(to.meta.title)
 
   // determine whether the user has logged in
+  // 查看有没有token储存在cookie中
   const hasToken = getToken()
  // 参考：https://blog.csdn.net/yezonggang/article/details/109809019
  // 许要军2022.08.02 add 有token，如果想去login则调到首页，如果是其他页面先判定是否有角色，有的话就跳过去，没有的话发请求得到永不信息，再调用函数维护store路由列表，报错要么没权限，要么是请求超时，就要返回error，清除token，返回登录页
   if (hasToken) {
     if (to.path === '/login') {
+      // 如果即将要去登录页，则重定向到⾸页
+      // 这种情况⼀般不是应⽤于退出登录，⼤多因为有⼈在路径中⼿动输⼊/login     来进⾏路由跳转
+      // 所以，直接回到⾸页
       // if is logged in, redirect to the home page
       next({ path: '/' })
       NProgress.done() // hack: https://github.com/PanJiaChen/vue-element-admin/pull/2939
     } else {
       // determine whether the user has obtained his permission roles through getInfo
+      // 查看该⽤户是否获得许可该⾓⾊可以进⼊那页⾯（注释翻译）
+      // 个⼈理解：去仓库中查看有没有存储个⼈信息
       const hasRoles = store.getters.roles && store.getters.roles.length > 0
       if (hasRoles) {
         next()
